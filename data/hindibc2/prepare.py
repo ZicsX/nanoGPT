@@ -4,7 +4,8 @@
 import os
 from tqdm import tqdm
 import numpy as np
-import tiktoken
+from transformers import PreTrainedTokenizerFast
+
 from datasets import load_dataset # huggingface datasets
 from multiprocessing import cpu_count
 
@@ -39,10 +40,19 @@ if __name__ == '__main__':
     # })
 
     # we now want to tokenize the dataset. first define the encoding function (gpt2 bpe)
-    enc = tiktoken.get_encoding("gpt2")
+    special_tokens = {
+        "pad_token": "[PAD]",
+        "bos_token": "[BOS]",  # Beginning of sequence
+        "eos_token": "[EOS]",  # End of sequence
+        "unk_token": "[UNK]",
+        "sep_token": "[SEP]",
+        "mask_token": "[MASK]",
+    }
+    # Initialize the tokenizer
+    enc = PreTrainedTokenizerFast(tokenizer_file="tokenizer.json", **special_tokens )
     def process(example):
-        ids = enc.encode_ordinary(example['text']) # encode_ordinary ignores any special tokens
-        ids.append(enc.eot_token) # add the end of text token, e.g. 50256 for gpt2 bpe
+        ids = enc.encode(example['text']) # encode_ordinary ignores any special tokens
+        ids.append(enc.eos_token_id) # add the end of text token, e.g. 50256 for gpt2 bpe
         # note: I think eot should be prepended not appended... hmm. it's called "eot" though...
         out = {'ids': ids, 'len': len(ids)}
         return out
