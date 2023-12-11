@@ -5,7 +5,7 @@ import os
 import pickle
 from contextlib import nullcontext
 import torch
-import tiktoken
+from transformers import PreTrainedTokenizerFast
 from model import GPTConfig, GPT
 
 # -----------------------------------------------------------------------------
@@ -69,8 +69,18 @@ if load_meta:
 else:
     # ok let's assume gpt-2 encodings by default
     print("No meta.pkl found, assuming GPT-2 encodings...")
-    enc = tiktoken.get_encoding("gpt2")
-    encode = lambda s: enc.encode(s, allowed_special={"<|endoftext|>"})
+    special_tokens = {
+        "pad_token": "[PAD]",
+        "bos_token": "[BOS]",  # Beginning of sequence
+        "eos_token": "[EOS]",  # End of sequence
+        "unk_token": "[UNK]",
+        "sep_token": "[SEP]",
+        "mask_token": "[MASK]",
+    }
+    # Initialize the tokenizer
+    enc = PreTrainedTokenizerFast(tokenizer_file="tokenizer.json", **special_tokens )
+
+    encode = lambda s: enc.encode(s)
     decode = lambda l: enc.decode(l)
 
 # encode the beginning of the prompt
