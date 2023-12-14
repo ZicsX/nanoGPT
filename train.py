@@ -45,14 +45,13 @@ wandb_project = 'owt'
 wandb_run_name = 'gpt2' # 'run' + str(time.time())
 # data
 dataset = 'shakespeare'
-base_gradient_accumulation_steps = 2
 gradient_accumulation_steps = 5 * 8 # used to simulate larger batch sizes
 batch_size = 12 # if gradient_accumulation_steps > 1, this is the micro-batch size
 block_size = 1024
 # model
-n_layer = 25
-n_head = 20
-n_embd = 1280
+n_layer = 12
+n_head = 12
+n_embd = 768
 dropout = 0.0 # for pretraining 0 is good, for finetuning try 0.1+
 bias = False # do we use bias inside LayerNorm and Linear layers?
 # adamw optimizer
@@ -92,7 +91,6 @@ if ddp:
     seed_offset = ddp_rank # each process gets a different seed
     # world_size number of processes will be training simultaneously, so we can scale
     # down the desired gradient accumulation iterations per process proportionally
-    gradient_accumulation_steps = base_gradient_accumulation_steps + (ddp_world_size - base_gradient_accumulation_steps % ddp_world_size) % ddp_world_size
     print(f'{gradient_accumulation_steps=} {ddp_world_size=}')
     assert gradient_accumulation_steps % ddp_world_size == 0
 
