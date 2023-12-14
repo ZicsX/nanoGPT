@@ -45,11 +45,11 @@ wandb_project = 'owt'
 wandb_run_name = 'gpt2' # 'run' + str(time.time())
 # data
 dataset = 'shakespeare'
-gradient_accumulation_steps = 16 # used to simulate larger batch sizes
+gradient_accumulation_steps = 8 # used to simulate larger batch sizes
 batch_size = 12 # if gradient_accumulation_steps > 1, this is the micro-batch size
-block_size = 256
+block_size = 1024
 # model
-n_layer = 24
+n_layer = 36
 n_head = 20
 n_embd = 1280
 dropout = 0.0 # for pretraining 0 is good, for finetuning try 0.1+
@@ -135,7 +135,7 @@ best_val_loss = 1e9
 
 # attempt to derive vocab_size from the dataset
 meta_path = os.path.join(data_dir, 'meta.pkl')
-meta_vocab_size = 32000
+meta_vocab_size = 50304
 if os.path.exists(meta_path):
     with open(meta_path, 'rb') as f:
         meta = pickle.load(f)
@@ -151,7 +151,7 @@ if init_from == 'scratch':
     # determine the vocab size we'll use for from-scratch training
     if meta_vocab_size is None:
         print("defaulting to vocab_size of GPT-2 to 50304 (50257 rounded up for efficiency)")
-    model_args['vocab_size'] = meta_vocab_size if meta_vocab_size is not None else 32000
+    model_args['vocab_size'] = meta_vocab_size if meta_vocab_size is not None else 50304
     gptconf = GPTConfig(**model_args)
     model = GPT(gptconf)
 elif init_from == 'resume':
