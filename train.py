@@ -45,6 +45,7 @@ wandb_project = 'owt'
 wandb_run_name = 'gpt2' # 'run' + str(time.time())
 # data
 dataset = 'shakespeare'
+base_gradient_accumulation_steps = 100
 gradient_accumulation_steps = 5 * 8 # used to simulate larger batch sizes
 batch_size = 12 # if gradient_accumulation_steps > 1, this is the micro-batch size
 block_size = 1024
@@ -91,6 +92,7 @@ if ddp:
     seed_offset = ddp_rank # each process gets a different seed
     # world_size number of processes will be training simultaneously, so we can scale
     # down the desired gradient accumulation iterations per process proportionally
+    gradient_accumulation_steps = base_gradient_accumulation_steps + (ddp_world_size - base_gradient_accumulation_steps % ddp_world_size) % ddp_world_size
     print(f'{gradient_accumulation_steps=} {ddp_world_size=}')
     assert gradient_accumulation_steps % ddp_world_size == 0
 
