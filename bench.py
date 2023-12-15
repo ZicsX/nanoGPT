@@ -57,9 +57,16 @@ else:
 # )
 
 #for 350m Paras
+# gptconf = GPTConfig(
+#     block_size = block_size, # how far back does the model look? i.e. context size
+#     n_layer = 24, n_head = 16, n_embd = 1024, # size of the model
+#     dropout = 0, # for determinism
+#     bias = bias,
+# )
+# for 774m paras
 gptconf = GPTConfig(
     block_size = block_size, # how far back does the model look? i.e. context size
-    n_layer = 24, n_head = 16, n_embd = 1024, # size of the model
+    n_layer = 36, n_head = 20, n_embd = 1280, # size of the model
     dropout = 0, # for determinism
     bias = bias,
 )
