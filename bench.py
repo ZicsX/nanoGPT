@@ -43,8 +43,8 @@ if real_data:
         return x, y
 else:
     # alternatively, if fixed data is desired to not care about data loading
-    x = torch.randint(32000, (batch_size, block_size), device=device)
-    y = torch.randint(32000, (batch_size, block_size), device=device)
+    x = torch.randint(32064, (batch_size, block_size), device=device)
+    y = torch.randint(32064, (batch_size, block_size), device=device)
     get_batch = lambda split: (x, y)
 
 # model init
