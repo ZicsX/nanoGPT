@@ -68,7 +68,7 @@ if load_meta:
     decode = lambda l: ''.join([itos[i] for i in l])
 else:
     # ok let's assume gpt-2 encodings by default
-    print("No meta.pkl found, assuming GPT-2 encodings...")
+    print("No meta.pkl found, assuming Indus encodings...")
     special_tokens = {
         "pad_token": "[PAD]",
         "bos_token": "[BOS]",  # Beginning of sequence
@@ -95,5 +95,6 @@ with torch.no_grad():
     with ctx:
         for k in range(num_samples):
             y = model.generate(x, max_new_tokens, temperature=temperature, top_k=top_k)
-            print(decode(y[0].tolist()))
+            my_list = [x for x in y[0].tolist() if x != 6]
+            print(decode(my_list))
             print('---------------')
