@@ -47,13 +47,23 @@ else:
     y = torch.randint(32064, (batch_size, block_size), device=device)
     get_batch = lambda split: (x, y)
 
+# for model 124m paras
 # model init
+# gptconf = GPTConfig(
+#     block_size = block_size, # how far back does the model look? i.e. context size
+#     n_layer = 12, n_head = 12, n_embd = 768, # size of the model
+#     dropout = 0, # for determinism
+#     bias = bias,
+# )
+
+#for 350m Paras
 gptconf = GPTConfig(
     block_size = block_size, # how far back does the model look? i.e. context size
-    n_layer = 12, n_head = 12, n_embd = 768, # size of the model
+    n_layer = 24, n_head = 16, n_embd = 1024, # size of the model
     dropout = 0, # for determinism
     bias = bias,
 )
+
 model = GPT(gptconf)
 model.to(device)
 
