@@ -211,7 +211,7 @@ while iter_num < max_iters:
         logits, loss = model(X, Y)
         loss = loss / gradient_accumulation_steps
         X, Y = get_batch('train')
-        X, Y = accelerator.prepare(X, Y, non_blocking=True)
+        X, Y = accelerator.prepare(X, Y)
         accelerator.backward(loss)
 
     if grad_clip != 0.0:
