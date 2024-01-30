@@ -169,12 +169,9 @@ if block_size < model.config.block_size:
 # Use Accelerate's prepare method to move the model to the GPU
 model = accelerator.prepare(model)
 
-# optimizer
-# Now create the optimizer with the model parameters that are already on the GPU
-optimizer = model.configure_optimizers(weight_decay, learning_rate, (beta1, beta2), device_type='cuda')
-if init_from == 'resume':
-    optimizer.load_state_dict(checkpoint['optimizer'])
-checkpoint = None # free up memory
+# Call the static method configure_optimizers
+optimizer = GPT.configure_optimizers(model, weight_decay, learning_rate, (beta1, beta2), 'cuda')
+optimizer = accelerator.prepare(optimizer)
 
 # helps estimate an arbitrarily accurate loss over either split using many batches
 @torch.no_grad()
