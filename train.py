@@ -82,7 +82,7 @@ exec(open('configurator.py').read()) # overrides from command line or config fil
 config = {k: globals()[k] for k in config_keys} # will be useful for logging
 # -----------------------------------------------------------------------------
 
-accelerator = Accelerator(mixed_precision='fp16')
+accelerator = Accelerator()
 
 # various inits, derived attributes, I/O setup
 tokens_per_iter = gradient_accumulation_steps * batch_size * block_size
@@ -256,7 +256,6 @@ while True:
         accelerator.backward(loss)
     # clip the gradient
     if grad_clip != 0.0:
-        accelerator.unscale_(optimizer)
         torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
     # step the optimizer and scaler if training in fp16
     optimizer.step()
