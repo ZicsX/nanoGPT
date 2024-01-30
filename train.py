@@ -82,7 +82,7 @@ exec(open('configurator.py').read()) # overrides from command line or config fil
 config = {k: globals()[k] for k in config_keys} # will be useful for logging
 # -----------------------------------------------------------------------------
 
-accelerator = Accelerator(fp16=True)
+accelerator = Accelerator(mixed_precision='fp16')
 
 # various inits, derived attributes, I/O setup
 tokens_per_iter = gradient_accumulation_steps * batch_size * block_size
