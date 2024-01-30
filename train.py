@@ -130,14 +130,15 @@ train_dataset = MemMapDataset(os.path.join(data_dir, 'train.bin'), block_size)
 val_dataset = MemMapDataset(os.path.join(data_dir, 'val.bin'), block_size)
 
 from torch.utils.data.distributed import DistributedSampler
+from accelerate import DistributedType
 
-# Create a DistributedSampler for the training dataset
-train_sampler = DistributedSampler(train_dataset, shuffle=True) if accelerator.is_distributed else None
-train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=(train_sampler is None), sampler=train_sampler, pin_memory=True, num_workers=num_workers)
+# Create a DistributedSampler for the training dataset if in a distributed environment
+train_sampler = DistributedSampler(train_dataset, shuffle=True) if accelerator.state.distributed_type != DistributedType.NO else None
+train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=(train_sampler is None), sampler=train_sampler, pin_memory=True, num_workers=4)
 
-# Create a DistributedSampler for the validation dataset
-val_sampler = DistributedSampler(val_dataset, shuffle=False) if accelerator.is_distributed else None
-val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, sampler=val_sampler, pin_memory=True, num_workers=num_workers)
+# Similarly, for the validation dataset
+val_sampler = DistributedSampler(val_dataset, shuffle=False) if accelerator.state.distributed_type != DistributedType.NO else None
+val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, sampler=val_sampler, pin_memory=True, num_workers=4)
 
 # -----------------------------------------------------------------------------
 # Model Initialization
