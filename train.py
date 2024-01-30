@@ -157,7 +157,7 @@ def estimate_loss():
         losses = torch.zeros(eval_iters)
         for k in range(eval_iters):
             X, Y = get_batch(split)
-            X, Y = accelerator.prepare(X, Y, non_blocking=True)
+            X, Y = accelerator.prepare(X, Y)
             logits, loss = model(X, Y)
             losses[k] = loss.item()
         out[split] = losses.mean()
@@ -177,7 +177,7 @@ def get_lr(it):
 # Training Loop
 # -----------------------------------------------------------------------------
 X, Y = get_batch('train')
-X, Y = accelerator.prepare(X, Y, non_blocking=True)
+X, Y = accelerator.prepare(X, Y)
 t0 = time.time()
 
 while iter_num < max_iters:
