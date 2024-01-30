@@ -256,7 +256,7 @@ while True:
         accelerator.backward(loss)
     # clip the gradient
     if grad_clip != 0.0:
-        accelerator.unscale_(optimizer)
+        # accelerator.unscale_(optimizer)
         torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
     # step the optimizer and scaler if training in fp16
     optimizer.step()
