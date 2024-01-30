@@ -280,8 +280,9 @@ class GPT(nn.Module):
         # Create AdamW optimizer and use the fused version if it is available
         # Check if all parameters are CUDA tensors before using fused AdamW
         all_cuda = all(p.is_cuda for p in self.parameters())
+        all_float = all(p.dtype in [torch.float16, torch.float32, torch.float64] for p in self.parameters())
         fused_available = 'fused' in inspect.signature(torch.optim.AdamW).parameters
-        use_fused = fused_available and device_type == 'cuda' and all_cuda
+        use_fused = fused_available and device_type == 'cuda' and all_cuda and all_float
 
         extra_args = dict(fused=True) if use_fused else dict()
         optimizer = torch.optim.AdamW(optim_groups, lr=learning_rate, betas=betas, **extra_args)

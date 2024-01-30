@@ -166,13 +166,15 @@ if block_size < model.config.block_size:
     model.crop_block_size(block_size)
     model_args['block_size'] = block_size # so that the checkpoint will have the right value
 
+# Use Accelerate's prepare method to move the model to the GPU
+model = accelerator.prepare(model)
+
 # optimizer
-optimizer = model.configure_optimizers(weight_decay, learning_rate, (beta1, beta2), 'cuda')
+# Now create the optimizer with the model parameters that are already on the GPU
+optimizer = model.configure_optimizers(weight_decay, learning_rate, (beta1, beta2), device_type='cuda')
 if init_from == 'resume':
     optimizer.load_state_dict(checkpoint['optimizer'])
 checkpoint = None # free up memory
-
-model, optimizer = accelerator.prepare(model, optimizer)
 
 # helps estimate an arbitrarily accurate loss over either split using many batches
 @torch.no_grad()
