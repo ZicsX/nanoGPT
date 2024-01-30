@@ -25,6 +25,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
 from accelerate import Accelerator
+from multiprocessing import cpu_count
 
 from model import GPTConfig, GPT
 
@@ -96,9 +97,10 @@ log_filename = f"{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}_{datase
 log_filepath = os.path.join(out_dir, log_filename)
 
 def log(message):
-    print(message)
-    with open(log_filepath, 'a') as f:
-        f.write(f'{message}\n')
+    if accelerator.is_main_process:
+        print(message)
+        with open(log_filepath, 'a') as f:
+            f.write(f'{message}\n')
 
 # -----------------------------------------------------------------------------
 # Data Loading
@@ -116,12 +118,26 @@ class MemMapDataset(Dataset):
         y = self.data[idx + 1:idx + 1 + self.block_size]
         return torch.tensor(x, dtype=torch.long), torch.tensor(y, dtype=torch.long)
 
+# Determine the number of CPU cores
+num_cpus = cpu_count()
+
+# Set num_workers to a fraction of the available CPUs or the whole count
+num_workers = max(1, num_cpus // 2)  # Example: use half of the CPU cores
+
+
 data_dir = os.path.join('data', dataset)
 train_dataset = MemMapDataset(os.path.join(data_dir, 'train.bin'), block_size)
 val_dataset = MemMapDataset(os.path.join(data_dir, 'val.bin'), block_size)
 
-train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=4)
-val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers=4)
+train_sampler = DistributedSampler(train_dataset, shuffle=True) if accelerator.is_distributed else None
+val_sampler = DistributedSampler(val_dataset, shuffle=True) if accelerator.is_distributed else None
+
+train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=(train_sampler is None), sampler=train_sampler, pin_memory=True, num_workers=num_workers)
+val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=(val_sampler is None), sampler=val_sampler, pin_memory=True, num_workers=num_workers)
+
+# Adjust the DataLoader to use DistributedSampler
+from torch.utils.data.distributed import DistributedSampler
+
 
 # -----------------------------------------------------------------------------
 # Model Initialization
@@ -196,10 +212,15 @@ t0 = time.time()
 
 for epoch in range(max_iters):
     for i, (X, Y) in enumerate(train_loader):
+        print("debug enumerate(train_loader) ")
         X, Y = accelerator.prepare(X, Y)
         optimizer.zero_grad()
 
+        print("optimizer.zero_grad()")
+
         for micro_step in range(gradient_accumulation_steps):
+            print("micro_step in range(gradient_accumulation_steps)")
+
             logits, loss = model(X, Y)
             loss = loss / gradient_accumulation_steps
             accelerator.backward(loss)
