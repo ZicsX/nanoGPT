@@ -134,11 +134,11 @@ from accelerate import DistributedType
 
 # Create a DistributedSampler for the training dataset if in a distributed environment
 train_sampler = DistributedSampler(train_dataset, shuffle=True) if accelerator.state.distributed_type != DistributedType.NO else None
-train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=(train_sampler is None), sampler=train_sampler, pin_memory=True, num_workers=4)
+train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=(train_sampler is None), sampler=train_sampler, pin_memory=True, num_workers=0)
 
 # Similarly, for the validation dataset
 val_sampler = DistributedSampler(val_dataset, shuffle=False) if accelerator.state.distributed_type != DistributedType.NO else None
-val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, sampler=val_sampler, pin_memory=True, num_workers=4)
+val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, sampler=val_sampler, pin_memory=True, num_workers=0)
 
 # -----------------------------------------------------------------------------
 # Model Initialization
