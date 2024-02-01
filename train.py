@@ -162,7 +162,7 @@ model_args = dict(
 )
 
 # Resume from a checkpoint if specified
-epoch = 0
+iter_num = 0
 if init_from == 'scratch':
     log("Initializing a new model from scratch")
     gptconf = GPTConfig(**model_args)
@@ -185,7 +185,7 @@ elif init_from == 'resume':
 
     model.load_state_dict(checkpoint['model'])
 
-    epoch = checkpoint['epoch']
+    iter_num = checkpoint['iter_num']
     best_val_loss = checkpoint['best_val_loss']
 
 else:
@@ -206,18 +206,18 @@ optimizer = accelerator.prepare(optimizer)
 # Training Loop
 # -----------------------------------------------------------------------------
 
-while epoch < max_iters:
+while iter_num < max_iters:
     X, Y = get_batch('train', data_dir, block_size, batch_size)
     X, Y = accelerator.prepare(X, Y)
     t0 = time.time()
-    lr = get_lr(epoch, warmup_iters, lr_decay_iters, learning_rate, min_lr)
+    lr = get_lr(iter_num, warmup_iters, lr_decay_iters, learning_rate, min_lr)
 
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
 
-    if epoch % eval_interval == 0 and accelerator.is_main_process:
+    if iter_num % eval_interval == 0 and accelerator.is_main_process:
         losses = estimate_loss(model, eval_iters, accelerator, get_batch, data_dir, block_size, batch_size)
-        log(f"Epoch {epoch}: Train loss {losses['train']:.4f}, Val loss {losses['val']:.4f}")
+        log(f"Step {iter_num}: Train loss {losses['train']:.4f}, Val loss {losses['val']:.4f}")
 
         if losses['val'] < best_val_loss or always_save_checkpoint:
             best_val_loss = losses['val']
@@ -225,10 +225,10 @@ while epoch < max_iters:
                 'model': accelerator.unwrap_model(model).state_dict(),
                 'optimizer': optimizer.state_dict(),
                 'model_args': model_args,
-                'epoch': epoch,
+                'iter_num': iter_num,
                 'best_val_loss': best_val_loss,
             }
-            checkpoint_path = os.path.join(out_dir, f'ckpt_epoch_{epoch}_loss_{best_val_loss}.pt')
+            checkpoint_path = os.path.join(out_dir, f'ckpt_iter_num_{iter_num}_loss_{best_val_loss}.pt')
             accelerator.save(checkpoint, checkpoint_path)
             log(f"Checkpoint saved to {checkpoint_path}")
 
@@ -247,14 +247,14 @@ while epoch < max_iters:
         optimizer.zero_grad(set_to_none=True)
 
         if detailed_logging and accelerator.is_main_process:
-            log(f"Epoch {epoch}, Step {micro_step}: Loss {loss.item()}")
+            log(f"Iter {iter_num}, micro_step {micro_step}: Loss {loss.item()}")
 
         # Prepare the next batch
         X, Y = get_batch('train', data_dir, block_size, batch_size)
         X, Y = accelerator.prepare(X, Y)
 
     dt = time.time() - t0
-    if epoch % log_interval == 0 and accelerator.is_main_process:
+    if iter_num % log_interval == 0 and accelerator.is_main_process:
         lossf = loss.item() * gradient_accumulation_steps
-        log(f"Epoch {epoch}: Loss {lossf:.4f}, Time {dt*1000:.2f}ms")
-    epoch += 1
+        log(f"Iter {iter_num}: Loss {lossf:.4f}, Time {dt*1000:.2f}ms")
+    iter_num += 1
